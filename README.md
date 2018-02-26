@@ -120,7 +120,7 @@ main(context);
 
 Every context has a `cancelled` promise.
 Use this promise to effect cancellation to third-party functions that have
-their cancellation interface.
+their own cancellation interface.
 For example, the context delay method uses `setTimeout` and `clearTimeout`.
 
 ```js
