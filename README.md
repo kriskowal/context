@@ -3,6 +3,9 @@
 Context is a JavaScript solution to cancelling asynchronous work with promises.
 Pass a context forward as an argument, return a promise for the result.
 
+
+## withTimeout
+
 Contexts can be attenuated with a timeout, `context = context.withTimeout(ms)`.
 
 ```js
@@ -41,6 +44,8 @@ Output:
 context expired
 ```
 
+## withCancel
+
 Cancel all work in a child context, `let cancel; ({context, cancel) =
 context.withCancel()); cancel(new Error("please stop"))`.
 
@@ -74,8 +79,14 @@ async function count(context, ms) {
 main(context)
 ```
 
+
+## delay
+
 Run a timer in a context. `context.delay(ms)` returns a promise that will resolve
 after `ms` or reject if the context times out or gets cancelled.
+
+
+## get
 
 Contexts are immutable, to avoid name conflict hazards.
 Contexts can be used as keys to WeakMaps, for "context scoped storage" (CSS).
@@ -103,6 +114,159 @@ async function child(context) {
 
 main(context);
 ```
+
+
+## cancelled
+
+Every context has a `cancelled` promise.
+Use this promise to effect cancellation to third-party functions that have
+their cancellation interface.
+For example, the context delay method uses `setTimeout` and `clearTimeout`.
+
+```js
+function delay(context, ms) {
+    return new Promise((resolve, reject) => {
+        let handle = setTimeout(resolve, ms);
+        context.cancelled.then((error) => {
+            clearTimeout(handle);
+            reject(error);
+        }, () => {});
+    });
+}
+```
+
+The DOM `fetch` function supports a cancellation signal.
+
+```js
+function fetchWithContext(context, path, options) {
+    if (options == null) {
+        options = {};
+    }
+    let abortController = new AbortController();
+    options.signal = abortController.signal;
+    context.cancelled.then(() => {
+        abortController.abort();
+    });
+    return fetch(path, options);
+}
+```
+
+The late XMLHttpRequest API (RIP) also had an API for cancellation.
+
+```js
+function xhr(context, method, location) {
+    return new Promise((resolve, reject) {
+        let request = new XMLHttpRequest();
+
+        let onLoad = () => {
+            if (xhrSuccess(request)) {
+                resolve(request.responseText);
+            } else {
+                onError();
+            }
+        };
+
+        let onError = () => {
+            var error = new Error("Can't " + method + " " + JSON.stringify(location));
+            if (request.status === 404 || request.status === 0) {
+                error.code = "ENOENT";
+                error.notFound = true;
+            }
+            reject(error);
+        };
+
+        // <<<<<<<<<<
+
+        context.cancelled.then(() => {
+            request.abort();
+        }, () => {});
+
+        // >>>>>>>>>>
+        
+        try {
+            request.open(method, location, true);
+
+            request.onreadystatechange = () => {
+                if (request.readyState === 4) {
+                    onLoad();
+                }
+            };
+            request.onLoad = onLoad;
+            request.onError = onError;
+
+            request.send();
+
+        } catch (exception) {
+            reject(exception);
+        }
+    });
+}
+
+// Determine if an XMLHttpRequest was successful
+// Some versions of WebKit return 0 for successful file:// URLs
+function xhrSuccess(req) {
+    return (req.status === 200 || (req.status === 0 && req.responseText));
+}
+```
+
+
+## Cancel dangling work
+
+Cancelling in a finally clause ensures that a function leaves no loose threads
+running after it has returned.
+In this example, two functions race to finish a job, and we can cancel the jobs
+that lost the race.
+
+```js
+async function main(context) {
+    try {
+        await race(context);
+    } catch (error) {
+        console.error(error.stack);
+    }
+}
+
+async function race(context) {
+    let cancel;
+    ({context, cancel} = context.withCancel());
+    try {
+        let tortoise = racer(context, "tortoise", 10, 100);
+        let hare = racer(context, "hare", 1000, 10);
+        let winner = await Promise.race([tortoise, hare]);
+        console.log(winner, "wins the race");
+    } finally {
+        cancel();
+    }
+}
+
+async function racer(context, name, sleep, speed) {
+    try {
+        console.log(name, "takes a nap")
+        await context.delay(sleep);
+        console.log(name, "starts racing");
+        await context.delay(speed);
+        console.log(name, "crosses the finish line");
+        return name;
+    } catch (error) {
+        console.log(name, "loses the race");
+        throw error;
+    }
+}
+```
+
+Output:
+
+```
+tortoise takes a nap
+hare takes a nap
+tortoise starts racing
+tortoise crosses the finish line
+tortoise wins the race
+hare loses the race
+```
+
+Note that the hare exits through an exception.
+
 
 ## Why are promises not cancellable?
 
