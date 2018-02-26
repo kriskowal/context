@@ -1,0 +1,25 @@
+{
+  "name": "@kriskowal/context",
+  "version": "1.0.0",
+  "description": "context cancellation, deadlines, storage",
+  "main": "context.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kriskowal/context.git"
+  },
+  "keywords": [
+    "context",
+    "cancellation",
+    "deadlines",
+    "storage"
+  ],
+  "author": "Kris Kowal <kris@cixar.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/kriskowal/context/issues"
+  },
+  "homepage": "https://github.com/kriskowal/context#readme"
+}
