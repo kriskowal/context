@@ -3,7 +3,7 @@
 Context is a JavaScript solution to cancelling asynchronous work with promises.
 Pass a context forward as an argument, return a promise for the result.
 
-Contexts can be attenuated with a timeout, `ctx = ctx.withTimeout(ms)`.
+Contexts can be attenuated with a timeout, `context = context.withTimeout(ms)`.
 
 ```js
 let context = require("@kriskowal/context");
@@ -41,8 +41,8 @@ Output:
 context expired
 ```
 
-Cancel all work in a child context, `let cancel; ({ctx, cancel) =
-ctx.withCancel()); cancel(new Error("please stop"))`.
+Cancel all work in a child context, `let cancel; ({context, cancel) =
+context.withCancel()); cancel(new Error("please stop"))`.
 
 ```js
 let context = require("@kriskowal/context");
@@ -74,12 +74,12 @@ async function count(context, ms) {
 main(context)
 ```
 
-Run a timer in a context. `ctx.delay(ms)` returns a promise that will resolve
+Run a timer in a context. `context.delay(ms)` returns a promise that will resolve
 after `ms` or reject if the context times out or gets cancelled.
 
 Contexts are immutable, to avoid name conflict hazards.
 Contexts can be used as keys to WeakMaps, for "context scoped storage" (CSS).
-To retrieve the value for a context or any of its parents, call `ctx.get(map)`.
+To retrieve the value for a context or any of its parents, call `context.get(map)`.
 
 ```js
 var context = require("@kriskowal/context");
