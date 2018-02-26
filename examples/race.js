@@ -13,8 +13,8 @@ async function race(context) {
     let cancel;
     ({context, cancel} = context.withCancel());
     try {
-        let tortoise = racer(context, "tortoise", 10, 100);
-        let hare = racer(context, "hare", 1000, 10);
+        let tortoise = racer(context, "tortoise", 100, 1000);
+        let hare = racer(context, "hare", 1000, 900);
         let winner = await Promise.race([tortoise, hare]);
         console.log(winner, "wins the race");
     } finally {
