@@ -326,9 +326,9 @@ context local storage.
 
 [GoContext]: https://golang.org/pkg/context/
 
-The Go context also provides a mechanism use the context itself as an arbitrary
-but shallowly immutable key-value store, also discouraging name collisions
-through the promotion of package-private-typed keys.
+The Go context also provides a mechanism to use the context itself as an
+arbitrary but shallowly immutable key-value store, also discouraging name
+collisions through the promotion of package-private-typed keys.
 
 I again credit Mark Miller for teaching me the use of WeakMaps to associate and
 gracefully release private data through immutable token objects.
