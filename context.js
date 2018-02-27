@@ -13,7 +13,11 @@
 // limitations under the License.
 
 const timeoutError = new Error("context expired");
+timeoutError.cancel = true;
+
 const cancelError = new Error("context cancelled");
+cancelError.cancel = true;
+
 const noop = () => {};
 const parents = new WeakMap();
 
@@ -44,7 +48,7 @@ class Context {
         let cancel, cancelled = new Promise((r) => cancel = r);
         let context = new Context(cancelled);
         parents.set(context, this);
-        this.cancelled.then(cancel, noop);
+        this.cancelled.then((error) => cancel(error || cancelError), noop);
         return {context, cancel};
     }
 
